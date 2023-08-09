@@ -32,7 +32,7 @@ def use_playwright(playwright: Playwright, authorize_url):
     """
     This function will use playwright to get the verification code
     """
-    browser = playwright.chromium.launch(headless=False)
+    browser = playwright.webkit.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
     page.goto(authorize_url)
@@ -42,7 +42,7 @@ def use_playwright(playwright: Playwright, authorize_url):
     page.get_by_label("Password").fill(logins.etrade_password)
     page.get_by_role("button", name="Log on").click()
     page.get_by_role("button", name="Accept").click()
-    return page.get_by_role("textbox").text_content()
+    return page.get_by_role("textbox").input_value()
 
 
 def oauth():
@@ -66,19 +66,18 @@ def oauth():
     # After you login, the page will provide a verification code to enter.
     authorize_url = etrade.authorize_url.format(etrade.consumer_key, request_token)
 
-    # with sync_playwright() as playwright:
-    #     (n := use_playwright(playwright, authorize_url))
-    # print(n)
+    with sync_playwright() as playwright:
+        access_token = use_playwright(playwright, authorize_url)
     # webbrowser.open(authorize_url)
     # text_content = input("Enter verification code: ")
 
-    # # Step 3: Exchange the authorized request token for an authenticated OAuth 1 session
-    # session = etrade.get_auth_session(
-    #     request_token, request_token_secret, params={"oauth_verifier": text_content}
-    # )
+    # Step 3: Exchange the authorized request token for an authenticated OAuth 1 session
+    session = etrade.get_auth_session(
+        request_token, request_token_secret, params={"oauth_verifier": access_token}
+    )
     while True:
         time.sleep(5)
-        update()
+        print(portfolio_data(session))
 
 
 if __name__ == "__main__":
