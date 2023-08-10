@@ -49,7 +49,7 @@ def update():
         {"name": "Viola", "address": "Sideway " + str(random.randint(0, 100))},
     ]
     for i, v in enumerate(baselist):
-        mycol.replace_one(v, mylist[i])
+        mycol.replace_one(v, mylist[i],upsert=True)
     print(mycol)
 
 

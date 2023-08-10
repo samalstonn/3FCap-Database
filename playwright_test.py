@@ -1,6 +1,7 @@
 from __future__ import print_function
 import time
 from playwright.sync_api import Playwright, sync_playwright, expect
+import pymongo
 from rauth import OAuth1Service
 import webbrowser
 from mongo_test import update
@@ -8,6 +9,26 @@ import logins
 
 
 base_url = "https://api.etrade.com"
+
+myclient = pymongo.MongoClient(logins.database)
+
+mydb = myclient["mydatabase"]
+mycol = mydb["new_portfolio"]
+
+
+def update_portfolio(data, collection):
+    """
+    Updates existing data in the database
+    """
+    print("called")
+
+    for x in data:
+        print(x)
+        print(x["symbolDescription"])
+        collection.replace_one(
+            {"symbolDescription": x["symbolDescription"]}, x, upsert=True
+        )
+    return "done"
 
 
 def portfolio_data(session):
@@ -25,7 +46,8 @@ def portfolio_data(session):
 
     # Make API call for GET request
     response = session.get(url, header_auth=True)
-    return response.json()
+    n = response.json()
+    return n
 
 
 def use_playwright(playwright: Playwright, authorize_url):
@@ -66,18 +88,23 @@ def oauth():
     # After you login, the page will provide a verification code to enter.
     authorize_url = etrade.authorize_url.format(etrade.consumer_key, request_token)
 
-    with sync_playwright() as playwright:
-        access_token = use_playwright(playwright, authorize_url)
-    # webbrowser.open(authorize_url)
-    # text_content = input("Enter verification code: ")
+    # with sync_playwright() as playwright:
+    #     access_token = use_playwright(playwright, authorize_url)
+    webbrowser.open(authorize_url)
+    access_token = input("Enter verification code: ")
 
     # Step 3: Exchange the authorized request token for an authenticated OAuth 1 session
     session = etrade.get_auth_session(
         request_token, request_token_secret, params={"oauth_verifier": access_token}
     )
     while True:
-        time.sleep(5)
-        print(portfolio_data(session))
+        update_portfolio(
+            portfolio_data(session)["PortfolioResponse"]["AccountPortfolio"][0][
+                "Position"
+            ],
+            mycol,
+        )
+        time.sleep(1)
 
 
 if __name__ == "__main__":
