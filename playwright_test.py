@@ -20,10 +20,8 @@ def update_portfolio(data, collection):
     """
     Updates existing data in the database
     """
-    print("called")
 
     for x in data:
-        print(x)
         print(x["symbolDescription"])
         collection.replace_one(
             {"symbolDescription": x["symbolDescription"]}, x, upsert=True
@@ -88,10 +86,10 @@ def oauth():
     # After you login, the page will provide a verification code to enter.
     authorize_url = etrade.authorize_url.format(etrade.consumer_key, request_token)
 
-    # with sync_playwright() as playwright:
-    #     access_token = use_playwright(playwright, authorize_url)
-    webbrowser.open(authorize_url)
-    access_token = input("Enter verification code: ")
+    with sync_playwright() as playwright:
+        access_token = use_playwright(playwright, authorize_url)
+    # webbrowser.open(authorize_url)
+    # access_token = input("Enter verification code: ")
 
     # Step 3: Exchange the authorized request token for an authenticated OAuth 1 session
     session = etrade.get_auth_session(
